@@ -6,6 +6,7 @@ T = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 # Demand per period
 D = [53000, 52000, 53000, 38000, 32000, 19000, 27000, 35000, 36000, 38000, 42000, 48000]
+print("D[0]",D[0])
 
 # Selling price per piece to distributors
 E = 75
@@ -104,11 +105,12 @@ model.addConstrs(O[t] <= W[t] * 10 for t in T)
 model.addConstrs(P[t] <= (W[t]*22*8)/2 + O[t]/2 for t in T)
 
 # Storage balance
-model.addConstrs(I[t] == I[t-1] + P[t] + C[t] - D[t] -S[t-1] + S[t] for t in T) # T has length 12 and max index 11, D ran out of index
+# for t=1 we have I[1] = I[0] + P[1] + C[1] - D[0] - S[0] + S[1]
+model.addConstrs(I[t] == I[t-1] + P[t] + C[t] - D[t-1] -S[t-1] + S[t] for t in T) # T has length 12 and max index 11, D ran out of index
 
 # Objective function: maximization of profit
 model.setObjective(
-    sum(E * D[t] for t in T) - 
+    sum(E * D[t-1] for t in T) - 
     sum(H[t] * c_H + L[t] * c_L + W[t] * c_W + O[t] * c_O + P[t] * c_P + C[t] * c_C + I[t] * c_I + S[t] * c_S for t in T),
     GRB.MAXIMIZE
 )
