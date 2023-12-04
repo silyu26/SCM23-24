@@ -118,12 +118,25 @@ model.addConstrs(I[t] == I[t-1] + P[t] + C[t] - D[t-1] -S[t-1] + S[t]
 model.addConstr(
     sum(delta[t] for t in T) <= 1)
 
+# no promotion in period 0, 12
+model.addConstr(delta[0]+delta[12] == 0)
+
 # Objective function: maximization of profit
+#model.setObjective(
+#    sum(E * D[t-1] for t in T) - 
+#    sum(H[t] * c_H + L[t] * c_L + W[t] * c_W + O[t] * c_O + P[t] * c_P + C[t] * c_C + I[t] * c_I + S[t] * c_S for t in T),
+#    GRB.MAXIMIZE
+#)
+
 model.setObjective(
-    sum(E * D[t-1] for t in T) - 
-    sum(H[t] * c_H + L[t] * c_L + W[t] * c_W + O[t] * c_O + P[t] * c_P + C[t] * c_C + I[t] * c_I + S[t] * c_S for t in T),
-    GRB.MAXIMIZE
-)
+    sum(E * D[t - 1] for t in T)
+    - 1 * sum(D[t - 1] * delta[t] for t in T)
+    + (E * 0.95) * sum(0.4 * D[t - 1] * delta[t] for t in T)
+    - 1 * sum(delta[t] * D[t_ - 1] * 0.15 for t in T for t_ in range(t+1, t+2) if t_ <= len(T))
+    - sum(c_W * W[t] + c_O * O[t] + c_H * H[t] + c_L * L[t] 
+    + c_I * I[t] + c_S * S[t] + c_P * P[t] + c_C * C[t] for t in T) 
+  , GRB.MAXIMIZE)
+
 
 model.optimize()
 
