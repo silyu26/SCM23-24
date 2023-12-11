@@ -143,12 +143,9 @@ model.optimize()
 model.printAttr("X")
 
 print("1) The annual profit of the optimal plan is ",model.objVal)
-print("2)")
-print("3)")
 print("4) Number of employees per month:")
 for t in T: 
     print("The number of employees in the period is {} {}.".format(t, W[t].X))
 print("5) Number of inventory per month:")
 for t in T:
     print("The number of inventory in the period is {} {}.".format(t, I[t].X))
-print("6)")

@@ -114,9 +114,9 @@ model.addConstrs(I[t] == I[t-1] + P[t] + C[t] - D[t-1] -S[t-1] + S[t]
                  + delta[t] * (0.4 * D[t - 1] + 0.15 * sum(D[t_ - 1] for t_ in range(t+1, t+2) if t_ <= len(T)))              
                  for t in T) # T has length 12 and max index 11, D ran out of index
 
-# Maximum one sales reduction over the planning period
+# Having 2 or 3 sales reduction over the planning period
 model.addConstr(
-    sum(delta[t] for t in T) <= 2)
+    sum(delta[t] for t in T) <= 3)
 
 # no promotion in period 0, 12
 model.addConstr(delta[0]+delta[12] == 0)
@@ -143,12 +143,9 @@ model.optimize()
 model.printAttr("X")
 
 print("1) The annual profit of the optimal plan is ",model.objVal)
-print("2)")
-print("3)")
 print("4) Number of employees per month:")
 for t in T: 
     print("The number of employees in the period is {} {}.".format(t, W[t].X))
 print("5) Number of inventory per month:")
 for t in T:
     print("The number of inventory in the period is {} {}.".format(t, I[t].X))
-print("6)")

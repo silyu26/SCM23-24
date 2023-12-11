@@ -32,8 +32,8 @@ c_L = 1000
 # Cost of materials
 c_P = 20
 
-# Warehousing costs increases to 15
-c_I = 15
+# Warehousing costs
+c_I = 10
 
 # Shortage costs
 c_S = 12
@@ -74,6 +74,9 @@ C = model.addVars(T, name="C", vtype=GRB.INTEGER)
 # Overtime in period t
 O = model.addVars(T, name="O", vtype=GRB.INTEGER)
 
+# Sales promotion in period t (Binary variable) 
+delta = model.addVars([0] + T, name="delta", vtype=GRB.BINARY)
+
 # Constraints
 # ----------------------------------------------------------------
 
@@ -106,14 +109,34 @@ model.addConstrs(P[t] <= (W[t]*22*8)/2 + O[t]/2 for t in T)
 
 # Storage balance
 # for t=1 we have I[1] = I[0] + P[1] + C[1] - D[0] - S[0] + S[1]
-model.addConstrs(I[t] == I[t-1] + P[t] + C[t] - D[t-1] -S[t-1] + S[t] for t in T) # T has length 12 and max index 11, D ran out of index
+model.addConstrs(I[t] == I[t-1] + P[t] + C[t] - D[t-1] -S[t-1] + S[t] 
+                 - 0.15 * D[t - 1] * sum(delta[t_] for t_ in range(t-1, t) if t_ > 0)
+                 + delta[t] * (0.4 * D[t - 1] + 0.15 * sum(D[t_ - 1] for t_ in range(t+1, t+2) if t_ <= len(T)))              
+                 for t in T) # T has length 12 and max index 11, D ran out of index
+
+# Having 2 or 3 sales reduction over the planning period
+model.addConstr(
+    sum(delta[t] for t in T) <= 2)
+
+# no promotion in period 0, 12
+model.addConstr(delta[0]+delta[12] == 0)
 
 # Objective function: maximization of profit
+#model.setObjective(
+#    sum(E * D[t-1] for t in T) - 
+#    sum(H[t] * c_H + L[t] * c_L + W[t] * c_W + O[t] * c_O + P[t] * c_P + C[t] * c_C + I[t] * c_I + S[t] * c_S for t in T),
+#    GRB.MAXIMIZE
+#)
+
 model.setObjective(
-    sum(E * D[t-1] for t in T) - 
-    sum(H[t] * c_H + L[t] * c_L + W[t] * c_W + O[t] * c_O + P[t] * c_P + C[t] * c_C + I[t] * c_I + S[t] * c_S for t in T),
-    GRB.MAXIMIZE
-)
+    sum(E * D[t - 1] for t in T)
+    - 1 * sum(D[t - 1] * delta[t] for t in T)
+    + (E * 0.95) * sum(0.4 * D[t - 1] * delta[t] for t in T)
+    - 1 * sum(delta[t] * D[t_ - 1] * 0.15 for t in T for t_ in range(t+1, t+2) if t_ <= len(T))
+    - sum(c_W * W[t] + c_O * O[t] + c_H * H[t] + c_L * L[t] 
+    + c_I * I[t] + c_S * S[t] + c_P * P[t] + c_C * C[t] for t in T) 
+  , GRB.MAXIMIZE)
+
 
 model.optimize()
 
