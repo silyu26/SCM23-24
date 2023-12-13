@@ -121,6 +121,10 @@ model.addConstr(
 # no promotion in period 0, 12
 model.addConstr(delta[0]+delta[12] == 0)
 
+# no promotion overlap
+model.addConstrs(
+    delta[t] + delta[t-1] <= 1 for t in T)
+
 # Objective function: maximization of profit
 #model.setObjective(
 #    sum(E * D[t-1] for t in T) - 
@@ -149,3 +153,6 @@ for t in T:
 print("5) Number of inventory per month:")
 for t in T:
     print("The number of inventory in the period is {} {}.".format(t, I[t].X))
+
+
+print(f"promotions: {[delta[t].X for t in T]}")
