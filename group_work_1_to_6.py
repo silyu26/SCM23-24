@@ -41,7 +41,7 @@ c_S = 12
 # Third-party procurement costs
 c_C = 67
 
-# Overtime costs
+# Overtime costs 
 c_O = 18
 
 model = Model()
